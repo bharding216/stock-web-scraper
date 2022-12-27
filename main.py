@@ -6,7 +6,7 @@ import aiohttp
 import time
 
 # Tutorial: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
-
+# Test commit
 
 stock_df = pd.DataFrame()
 
