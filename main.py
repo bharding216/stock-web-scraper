@@ -5,6 +5,8 @@ import asyncio
 import aiohttp
 import time
 
+# Tutorial: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
+
 
 stock_df = pd.DataFrame()
 
