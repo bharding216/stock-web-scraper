@@ -6,7 +6,6 @@ import aiohttp
 import time
 
 # Tutorial: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
-# Test commit
 
 
 stock_df = pd.DataFrame()
@@ -74,20 +73,20 @@ async def main():
     tasks = []
     for page in pages:
         task = asyncio.create_task(scrape(page, stock_df))
-        # while this task code is running, continue with the scrape function
-        # but once you get to the await piece, 
+        # Scrape the page once Python gets a break in the program
+
         tasks.append(task)
     await asyncio.gather(*tasks)
-    # gather all the tasks before moving on
+    # The (*) operator unpacks the task list into separate
+    # expressions. 
+    # asyncio.gather returns a 'future object' that represents
+    # the group of tasks. 
+    # Basically, the program will wait until all pages are scraped. 
 
 
-
-
-
-#loop = asyncio.get_event_loop()
-#loop.run_until_complete(main())
 asyncio.run(main())
 
 time_difference = time.time() - start_time
 print(stock_df)
 print(time_difference)
+
