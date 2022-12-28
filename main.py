@@ -8,6 +8,7 @@ import time
 # Tutorial: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
 # Test commit
 
+
 stock_df = pd.DataFrame()
 
 async def scrape(page, stock_df):
@@ -73,18 +74,19 @@ async def main():
     tasks = []
     for page in pages:
         task = asyncio.create_task(scrape(page, stock_df))
+        # while this task code is running, continue with the scrape function
+        # but once you get to the await piece, 
         tasks.append(task)
     await asyncio.gather(*tasks)
+    # gather all the tasks before moving on
 
 
 
 
 
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-
-
+#loop = asyncio.get_event_loop()
+#loop.run_until_complete(main())
+asyncio.run(main())
 
 time_difference = time.time() - start_time
 print(stock_df)
