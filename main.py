@@ -10,12 +10,33 @@ import time
 
 stock_df = pd.DataFrame()
 
+def clean_up(stock_df):
+    stock_df[['Name', 'Current price', 'Change(%)', 'Open','High', 'Low']] = \
+    stock_df[['Name', 'Current price', 'Change(%)', 'Open', 'High', 'Low']] \
+    .astype(str)
+
+    stock_df.replace({'Current price': {',':'', '-':'1'},
+                    'Change(%)': {',':'', '-':'1', '%':''},
+                    'Open': {',':'', '-':'1'},
+                    'High': {',':'', '-':'1'},
+                    'Low': {',':'', '-':'1'},
+                    'Volume': {',':'', '-':'1'}
+    }, regex=True, inplace=True)
+
+    stock_df[['Current price', 'Change(%)', 'Open', 'High', 'Low', 'Volume']] = \
+        stock_df[['Current price', 'Change(%)', 'Open', 'High', 'Low', 'Volume']]. \
+        apply(pd.to_numeric)
+
+    stock_df = stock_df.sort_values(by=['Volume'], ascending=False)
+
+
 async def scrape(page, stock_df):
     async with aiohttp.ClientSession() as session:
         async with session.get(page) as resp:
             body = await resp.text()
 
             soup = bs(body, 'html.parser')
+
 
             if soup.find('table'):
                 stock_table = soup.find('table', class_='tabMini tabQuotes')
@@ -30,9 +51,8 @@ async def scrape(page, stock_df):
                         row_values.append(new_value)
 
                     stock_df.loc[len(stock_df)] = row_values
-
-
-
+    
+        clean_up(stock_df)
 
 
 async def main():
@@ -41,7 +61,8 @@ async def main():
     start_time = time.time()
     pages = []
 
-    for page_number in range(1, 5):
+    for page_number in range(1, 50):
+        # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
         url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
         url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
         url = url_start + url_end + str(page_number)
@@ -68,20 +89,18 @@ async def main():
     stock_df = pd.DataFrame(columns = headers)
 
 
-
-
     tasks = []
     for page in pages:
         task = asyncio.create_task(scrape(page, stock_df))
-        # Scrape the page once Python gets a break in the program
-
         tasks.append(task)
-    await asyncio.gather(*tasks)
+
+    await asyncio.gather(*tasks)        
+
     # The (*) operator unpacks the task list into separate
     # expressions. 
     # asyncio.gather returns a 'future object' that represents
     # the group of tasks. 
-    # Basically, the program will wait until all pages are scraped. 
+    # Wait until all pages are scraped. 
 
 
 asyncio.run(main())
