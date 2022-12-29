@@ -26,7 +26,7 @@ env\Scripts\activate.bat
 6. Now you are ready to run the program!
 
 
-## Credits
+## Data Source
 https://www.centralcharts.com/
 
 ## License
