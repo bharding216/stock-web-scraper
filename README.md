@@ -30,4 +30,4 @@ env\Scripts\activate.bat
 https://www.centralcharts.com/
 
 ## License
-
+GNU General Public License v3.0
