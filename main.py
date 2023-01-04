@@ -1,7 +1,5 @@
 import requests
 from bs4 import BeautifulSoup as bs
-#import pandas as pd
-import httpx
 import asyncio
 import aiohttp
 import time
@@ -14,7 +12,7 @@ _start = time.time()
 async def main():
 
     pages = []
-    for page_number in range(1, 10):
+    for page_number in range(1, 5):
         # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
         url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
         url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
@@ -50,21 +48,23 @@ async def main():
 
                 soup = bs(resp, 'html.parser')
 
-                if soup.find('table'):
-                    stock_table = soup.find('table', class_='tabMini tabQuotes')
-                    tr_tag_list = stock_table.find_all('tr')
+                # Find the table and the tr tags in it
+                stock_table = soup.find('table', class_='tabMini tabQuotes')
+                tr_tag_list = stock_table.find_all('tr')
 
-                    for each_tr_tag in tr_tag_list[1:]:
-                        td_tag_list = each_tr_tag.find_all('td')
+                data_list = []
+                # find all the td tags in each row
+                for each_tr_tag in tr_tag_list[1:]:
+                    td_tag_list = each_tr_tag.find_all('td')
 
-                        row_values = []
-                        for each_td_tag in td_tag_list[0:7]:
-                            new_value = each_td_tag.text.strip()
-                            row_values.append(new_value)
-
+                    row_values = []
+                    for each_td_tag in td_tag_list[0:7]:
+                        new_value = each_td_tag.text.strip()
+                        row_values.append(new_value)
+                    data_list.append(row_values)
 
     print(headers)
-    print(row_values)
+    print(data_list)
 
     time_difference = time.time() - _start
     print(time_difference)
