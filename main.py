@@ -4,74 +4,230 @@ import asyncio
 import aiohttp
 import time
 
-# Tutorial: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
+# Tutorials: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
+#            https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
+
+# start_time = time.time()
+
+# async def get_data(session, page):
+#     async with session.get(page) as resp:
+
+#         print('I received a page!')
+
+#         # whenever the response comes back, do all of this:
+#         data = await resp.text()
+#         # this 'data' variable contains the html content (the response) 
+#         # of a page in text format
+#         soup = bs(data, 'html.parser')
+
+#         print('I parsed the page contents!')
+
+#         # make a list of all the tr tags on that page
+#         stock_table = soup.find('table', class_='tabMini tabQuotes')
+#         print('I found a table!')
 
 
-_start = time.time()
+#         tr_tag_list = stock_table.find_all('tr')
 
-async def main():
-
-    pages = []
-    for page_number in range(1, 5):
-        # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
-        url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
-        url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
-        url = url_start + url_end + str(page_number)
-        pages.append(url)
+#         print('I found some tr tags!')
 
 
+        
+#         data_list = []
+#         # find all the td tags in each row
+#         for each_tr_tag in tr_tag_list[1:]:
+#             td_tag_list = each_tr_tag.find_all('td')
 
-    webpage = requests.get(pages[0])
-    soup = bs(webpage.text, 'html.parser')
-    stock_table = soup.find('table', class_='tabMini tabQuotes')
-    th_tag_list = stock_table.find_all('th')
+#             row_values = []
+#             for each_td_tag in td_tag_list[0:7]:
+#                 new_value = each_td_tag.text.strip()
+#                 row_values.append(new_value)
+            
+#             data_list.append(row_values)
 
-    headers = []
-    for each_tag in th_tag_list:
-        title = each_tag.text
-        headers.append(title)
-    headers[0] = 'Name'
-
-    new_headers = []
-    for header in headers:
-        if header not in ('Cap.', 'Issued Cap.', ''):
-            new_headers.append(header)
-    headers = new_headers
+#     return data_list
+#         # send 'data_list' back to the caller function
 
 
+# async def main():
+
+#     async with aiohttp.ClientSession() as session:
+
+#         pages = []
+#         for page_number in range(1, 50):
+#             # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
+#             url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
+#             url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
+#             url = url_start + url_end + str(page_number)
+#             pages.append(url)
+
+#         # take a bunch of tasks and shove them into a list. This list is then 
+#         # sent to the 'get_data' function above. That function sends back 'data_list'.
+#         tasks = []
+#         for page in pages:
+#             tasks.append(asyncio.ensure_future(get_data(session, page)))
+#             # go do the 'get_data' function
+
+#         print('I compiled all your tasks!')
 
 
+
+
+
+#         # data is what is returned from the 'get_data' function above        
+#         data = await asyncio.gather(*tasks)
+
+#         print('test 2')
+
+#         # x is a list containing lists of tds, one for each tr on that page
+#         final_list = []
+#         for page in data:
+#             for tr in page:
+#                 final_list.append(tr)
+
+#         print(final_list)
+
+# asyncio.run(main())
+# print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+
+
+
+
+
+
+
+
+async def fetch_page(session, url):
+    print('I sent a request to the server')
+    async with session.get(url) as response:
+        print('I received another response!')
+        return await response.text()
+        # return the response to the calling function below
+
+
+async def scrape_multiple_pages(urls):
     async with aiohttp.ClientSession() as session:
-        for page in pages:
-            async with session.get(page) as response:
-                resp = await response.text()
 
-                soup = bs(resp, 'html.parser')
+        print('Now that I have all the urls, I will create a list of tasks')
+        tasks = [asyncio.create_task(fetch_page(session, url)) for url in urls]
+        print('I created my list of tasks')
+        # sends the task list to the 'fetch_page' function
 
-                # Find the table and the tr tags in it
-                stock_table = soup.find('table', class_='tabMini tabQuotes')
-                tr_tag_list = stock_table.find_all('tr')
 
-                data_list = []
-                # find all the td tags in each row
-                for each_tr_tag in tr_tag_list[1:]:
-                    td_tag_list = each_tr_tag.find_all('td')
-
-                    row_values = []
-                    for each_td_tag in td_tag_list[0:7]:
-                        new_value = each_td_tag.text.strip()
-                        row_values.append(new_value)
-                    data_list.append(row_values)
-
-    print(headers)
-    print(data_list)
-
-    time_difference = time.time() - _start
-    print(time_difference)
+        # returns a list of the results of each task and saves it as 'pages'
+        pages = await asyncio.gather(*tasks)
+        print("I received all the results from the 'fetch_page' function")
+        # take the results and exit this function
+        return pages
 
 
 
-asyncio.run(main())
+
+
+urls = []
+for page_number in range(1, 3):
+    # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
+    url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
+    url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
+    url = url_start + url_end + str(page_number)
+    urls.append(url)
+print('Collected all urls!')
+
+
+# receive the 'pages' variable from the function above
+# 'pages' is a list of the html content
+pages = asyncio.run(scrape_multiple_pages(urls))
+
+new_list = ''.join(pages)
+soup = bs(new_list, 'html.parser')
+tables = soup.find_all('table')
+
+data_list = []
+for table in tables:
+    rows = table.find_all('tr')
+
+    # for each row except the header row
+    for row in rows[1:]:
+        cells = row.find_all('td')
+        # one list per row, each list containing the td tags for that row
+
+        for cell in cells[0:7]:
+            new_value = cell.text.strip()
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Compare speed to the synchronous code:
+
+# start_time = time.time()
+
+# pages = []
+# for page_number in range(1, 5):
+#     # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
+#     url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
+#     url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
+#     url = url_start + url_end + str(page_number)
+#     pages.append(url)
+
+# for page in pages:
+#     response = requests.get(page)
+#     soup = bs(response.text, 'html.parser')
+
+#     # Find the table and the tr tags in it
+#     stock_table = soup.find('table', class_='tabMini tabQuotes')
+#     tr_tag_list = stock_table.find_all('tr')
+
+#     data_list = []
+#     # find all the td tags in each row
+#     for each_tr_tag in tr_tag_list[1:]:
+#         td_tag_list = each_tr_tag.find_all('td')
+
+#         row_values = []
+#         for each_td_tag in td_tag_list[0:7]:
+#             new_value = each_td_tag.text.strip()
+#             row_values.append(new_value)
+#         data_list.append(row_values)
+
+
+# print(data_list)
+# print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
 
 
 
