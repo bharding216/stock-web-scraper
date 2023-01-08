@@ -6,6 +6,7 @@ import time
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MultipleLocator
+import matplotlib.ticker as mticker
 from datetime import datetime
 
 my_info = {
@@ -14,98 +15,8 @@ my_info = {
 }
 
 
-
 # Tutorials: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
 #            https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
-
-# start_time = time.time()
-
-# async def get_data(session, page):
-#     async with session.get(page) as resp:
-
-#         print('I received a page!')
-
-#         # whenever the response comes back, do all of this:
-#         data = await resp.text()
-#         # this 'data' variable contains the html content (the response) 
-#         # of a page in text format
-#         soup = bs(data, 'html.parser')
-
-#         print('I parsed the page contents!')
-
-#         # make a list of all the tr tags on that page
-#         stock_table = soup.find('table', class_='tabMini tabQuotes')
-#         print('I found a table!')
-
-
-#         tr_tag_list = stock_table.find_all('tr')
-
-#         print('I found some tr tags!')
-
-
-        
-#         data_list = []
-#         # find all the td tags in each row
-#         for each_tr_tag in tr_tag_list[1:]:
-#             td_tag_list = each_tr_tag.find_all('td')
-
-#             row_values = []
-#             for each_td_tag in td_tag_list[0:7]:
-#                 new_value = each_td_tag.text.strip()
-#                 row_values.append(new_value)
-            
-#             data_list.append(row_values)
-
-#     return data_list
-#         # send 'data_list' back to the caller function
-
-
-# async def main():
-
-#     async with aiohttp.ClientSession() as session:
-
-#         pages = []
-#         for page_number in range(1, 50):
-#             # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
-#             url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
-#             url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
-#             url = url_start + url_end + str(page_number)
-#             pages.append(url)
-
-#         # take a bunch of tasks and shove them into a list. This list is then 
-#         # sent to the 'get_data' function above. That function sends back 'data_list'.
-#         tasks = []
-#         for page in pages:
-#             tasks.append(asyncio.ensure_future(get_data(session, page)))
-#             # go do the 'get_data' function
-
-#         print('I compiled all your tasks!')
-
-
-
-
-
-#         # data is what is returned from the 'get_data' function above        
-#         data = await asyncio.gather(*tasks)
-
-#         print('test 2')
-
-#         # x is a list containing lists of tds, one for each tr on that page
-#         final_list = []
-#         for page in data:
-#             for tr in page:
-#                 final_list.append(tr)
-
-#         print(final_list)
-
-# asyncio.run(main())
-# print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-
-
 
 
 async def fetch_page(session, url):
@@ -136,7 +47,7 @@ async def scrape_multiple_pages(urls):
 start_time = time.time()
 
 urls = []
-for page_number in range(1, 10):
+for page_number in range(1, 155):
     # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
     url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
     url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
@@ -158,7 +69,7 @@ header_list = []
 for tag in header_tag_list[0:7]:
     title = tag.text
     header_list.append(title)
-print(header_list)
+
 
 top_list = []
 for table in tables:
@@ -175,77 +86,79 @@ for table in tables:
             row_list.append(new_value)
         top_list.append(row_list)
 
-print(top_list)        
+# Create the lists into a dataframe
+stock_df = pd.DataFrame(top_list, columns=(header_list))
+
+# Change the data type to string
+stock_df[['Financial instrument', 'Current price', 'Change(%)', 'Open','High', 'Low']] = \
+    stock_df[['Financial instrument', 'Current price', 'Change(%)', 'Open', 'High', 'Low']] \
+    .astype(str)
+
+# Clean up the data
+stock_df.replace({'Current price': {',':'', '-':'1'},
+                  'Change(%)': {',':'', '-':'1', '%':''},
+                  'Open': {',':'', '-':'1'},
+                  'High': {',':'', '-':'1'},
+                  'Low': {',':'', '-':'1'},
+                  'Volume': {',':'', '-':'1'}
+}, regex=True, inplace=True)
+
+# Convert the data type back to numeric
+stock_df[['Current price', 'Change(%)', 'Open', 'High', 'Low', 'Volume']] = \
+    stock_df[['Current price', 'Change(%)', 'Open', 'High', 'Low', 'Volume']]. \
+    apply(pd.to_numeric)
+
+# Sort the data by volume 
+stock_df = stock_df.sort_values(by=['Volume'], ascending=False)
+
+# Get the top 10 stocks and plot them on a horizontal bar chart
+top_10_stock_df = stock_df.head(10)
+
+# y-values
+names = top_10_stock_df['Financial instrument']
+# x-values
+volumes = top_10_stock_df['Volume']
+
+# Create the 'fig' object (the outermost section of the image
+# that contains the axes object)
+fig = plt.figure()
+
+# Create the 'ax' object (found within the 'fig' object and
+# contains the axes, labels, and the actual plot
+ax = plt.subplot()
+
+# Create the 'bar_plot' object, add the data and bar labels
+bar_plot = ax.barh(names, volumes, color='green')
+# Group each bar label in a 'container'. Format each data value with a
+# comma every 3 digits.
+container = ax.containers[0]
+ax.bar_label(container, labels=[f'{x:,.0f}' for x in container.datavalues],
+    fontsize=6, padding=3)
+current_volumes = plt.gca().get_xticks()
+ax.xaxis.set_major_locator(mticker.FixedLocator(current_volumes))
+plt.gca().set_xticklabels([f'{x:,.0f}' for x in current_volumes], rotation=45)
+
+# Add a title and axis labels
+ax.set_xlabel('Trading Volume')
+ax.set_ylabel('Company Name')
+now = datetime.now()
+todays_date = now.strftime('%m/%d/%y')
+ax.set_title('10 Top NASDAQ Stocks by Volume for ' + todays_date)
+
+# Some formatting to give the labels proper padding
+plt.tight_layout()
+ax.set_xmargin(0.2)
+
+# Add extra tick marks every 2.5 million
+ax.xaxis.set_minor_locator(MultipleLocator(2500000))
+
+# Add major gridlines
+ax.grid(which='major', axis='x', color='lightgrey', linestyle='-', linewidth='1')
+
+
 print("--- %s seconds ---" % (time.time() - start_time))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Compare speed to the synchronous code:
-
-# start_time = time.time()
-
-# pages = []
-# for page_number in range(1, 5):
-#     # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
-#     url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
-#     url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
-#     url = url_start + url_end + str(page_number)
-#     pages.append(url)
-
-# for page in pages:
-#     response = requests.get(page)
-#     soup = bs(response.text, 'html.parser')
-
-#     # Find the table and the tr tags in it
-#     stock_table = soup.find('table', class_='tabMini tabQuotes')
-#     tr_tag_list = stock_table.find_all('tr')
-
-#     data_list = []
-#     # find all the td tags in each row
-#     for each_tr_tag in tr_tag_list[1:]:
-#         td_tag_list = each_tr_tag.find_all('td')
-
-#         row_values = []
-#         for each_td_tag in td_tag_list[0:7]:
-#             new_value = each_td_tag.text.strip()
-#             row_values.append(new_value)
-#         data_list.append(row_values)
-
-
-# print(data_list)
-# print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-
+# Show the plot
+plt.show()
 
 
