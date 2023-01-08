@@ -3,6 +3,17 @@ from bs4 import BeautifulSoup as bs
 import asyncio
 import aiohttp
 import time
+import pandas as pd
+from matplotlib import pyplot as plt
+from matplotlib.ticker import MultipleLocator
+from datetime import datetime
+
+my_info = {
+    'Name': 'Brandon Harding',
+    'Email': 'bharding80@gmail.com'
+}
+
+
 
 # Tutorials: https://oxylabs.io/blog/asynchronous-web-scraping-python-aiohttp
 #            https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
@@ -97,14 +108,10 @@ import time
 
 
 
-
-
-
-
 async def fetch_page(session, url):
     print('I sent a request to the server')
     async with session.get(url) as response:
-        print('I received another response!')
+        print('I received a response from the server!')
         return await response.text()
         # return the response to the calling function below
 
@@ -126,10 +133,10 @@ async def scrape_multiple_pages(urls):
 
 
 
-
+start_time = time.time()
 
 urls = []
-for page_number in range(1, 3):
+for page_number in range(1, 10):
     # https://www.centralcharts.com/en/price-list-ranking/ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p=1
     url_start = 'https://www.centralcharts.com/en/price-list-ranking/'
     url_end = 'ALL/asc/ts_19-us-nasdaq-stocks--qc_1-alphabetical-order?p='
@@ -146,19 +153,30 @@ new_list = ''.join(pages)
 soup = bs(new_list, 'html.parser')
 tables = soup.find_all('table')
 
-data_list = []
+header_tag_list = tables[0].find_all('th')
+header_list = []
+for tag in header_tag_list[0:7]:
+    title = tag.text
+    header_list.append(title)
+print(header_list)
+
+top_list = []
 for table in tables:
     rows = table.find_all('tr')
 
     # for each row except the header row
     for row in rows[1:]:
+        row_list = []
         cells = row.find_all('td')
         # one list per row, each list containing the td tags for that row
 
         for cell in cells[0:7]:
             new_value = cell.text.strip()
-            
+            row_list.append(new_value)
+        top_list.append(row_list)
 
+print(top_list)        
+print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
