@@ -8,6 +8,7 @@ The motivation behind this project was to get some experience using web scraping
 ## Features
 1. Implemented 'asyncio' library to write asynchronous code. Instead of waiting for the program to receive a response from the server before sending another request, all the requests are set up front. The program then pauses (awaits) until all the responses are collected. Lastly, all responses are scraped. This reduces the speed of the program by 96% (172 seconds down to 7 seconds).
 2. Uses pandas and matplotlib libraries to sort data and present it as a bar graph. 
+![bar graph example](https://github.com/bharding216/stock-web-scraper/blob/main/bar_graph_sample.png?raw=true)
 
 ## How to Install & Run the Project
 1. Install `virtualenv`. From the command line:
