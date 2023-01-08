@@ -4,11 +4,14 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MultipleLocator
 from datetime import datetime
+import time
 
 my_info = {
     'Name': 'Brandon Harding',
     'Email': 'bharding80@gmail.com'
 }
+
+start_time = time.time()
 
 # Create a list that contains the URL for each page.
 pages = []
@@ -141,6 +144,8 @@ ax.xaxis.set_minor_locator(MultipleLocator(2500000))
 
 # Add major gridlines
 ax.grid(which='major', axis='x', color='lightgrey', linestyle='-', linewidth='1')
+
+print("--- %s seconds ---" % (time.time() - start_time))
 
 # Show the plot
 plt.show()
