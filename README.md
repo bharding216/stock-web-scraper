@@ -6,7 +6,7 @@ The purpose of this project is to collect NASDAQ stock information (from https:/
 The motivation behind this project was to get some experience using web scraping in combination with the Pandas and Matplotlib libraries. The project is useful because it automatically produces a visual of the top companies by trading volume that was not available on the https://www.centralcharts.com/ website. 
 
 ## Features
-1. Implemented 'asyncio' library to write asynchronous code. Instead of waiting for the program to receive a response from the server before sending another request, all the requests are set up front. The program then pauses (awaits) until all the responses are collected. Lastly, all responses are scraped. This reduces the speed of the program by XX% (120 seconds down to 15 seconds).
+1. Implemented 'asyncio' library to write asynchronous code. Instead of waiting for the program to receive a response from the server before sending another request, all the requests are set up front. The program then pauses (awaits) until all the responses are collected. Lastly, all responses are scraped. This reduces the speed of the program by 96% (172 seconds down to 7 seconds).
 2. Uses pandas and matplotlib libraries to sort data and present it as a bar graph. 
 
 ## How to Install & Run the Project
